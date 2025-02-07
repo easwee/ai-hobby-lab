@@ -30,10 +30,10 @@ class YoutubeAudioDataExtractor:
 
     # We will be triggering the run method and pass in a list of youtube video urls
     # from which we want to extract data
-    def run(self, urls: list[str]):
+    def run(self, input: list[str]):
         print("Workflow started.")
         with ThreadPoolExecutor(max_workers=2) as executor:
-            results = executor.map(self.process, urls)
+            results = executor.map(self.process, input)
             print(list(results))
 
     # Our process method will be in charge of chaining together multiple steps of data extraction
@@ -131,7 +131,11 @@ class YoutubeAudioDataExtractor:
 
     def create_pdf(self, file_name: str, data: str):
         markdowner = Markdown()
+        output_dir = os.getenv("OUTPUT_DIR")
 
-        recipe_file = open(f"{file_name}.html","w")
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+        recipe_file = open(f"./output/{file_name}.html","w")
         recipe_file.write(markdowner.convert(data))
         recipe_file.close()
