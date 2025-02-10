@@ -131,7 +131,7 @@ class YoutubeAudioDataExtractor:
 
     def create_pdf(self, file_name: str, data: str):
         markdowner = Markdown()
-        output_dir = os.getenv("OUTPUT_DIR")
+        output_dir = os.getenv("OUTPUT_DIR") or "./output"
 
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
