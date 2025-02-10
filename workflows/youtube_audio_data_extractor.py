@@ -1,6 +1,7 @@
 import os
 import base64
 
+from typing import Tuple
 from concurrent.futures import ThreadPoolExecutor
 from yt_dlp import YoutubeDL
 from openai import OpenAI
@@ -15,15 +16,15 @@ from markdown2 import Markdown
 # USER_PROMPT_TEMPLATE defines the audio intelligence task.
 # It is currently instructing Soniox Omnio multimodal LLM
 # to extract formatted food recipes data from input audio
-USER_PROMPT_TEMPLATE = """Input audio contains cooking recipe data. Output formatted markdown document containing:
+USER_PROMPT_TEMPLATE = """
+Input audio contains cooking recipe data. Output formatted markdown document containing:
 1. Recipe title
 2. Short summary paragraph of what is being cooked.
-3. List of ingredients formatted as:
-- <ingredient> <amount>
+3. List of ingredients where each list item contains "<ingredient> <required amount>"
 4. Step by step cooking instructions as explained in the audio.
 
 Use wording as if you were conveying the recipe over radio. Make sure every listed ingredient is also used in the cooking process, otherwise do not list it.
-"""
+""".strip()
 
 
 class YoutubeAudioDataExtractor:
@@ -32,13 +33,16 @@ class YoutubeAudioDataExtractor:
     # from which we want to extract data
     def run(self, input: list[str]):
         print("Workflow started.")
+
+        # We can speed up the processing with multi-threading - increase max_workers amount if you can afford more
         with ThreadPoolExecutor(max_workers=2) as executor:
             results = executor.map(self.process, input)
+            # Print out informational tuple list
             print(list(results))
 
     # Our process method will be in charge of chaining together multiple steps of data extraction
     # We want to run the process in a separate thread for each url, to speed things up in case of multiple urls
-    def process(self, url: str):
+    def process(self, url: str) -> Tuple[str, str]:
         print(f"Processing {url}")
 
         # combine all the steps of this workflow together
