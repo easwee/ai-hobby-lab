@@ -7,15 +7,16 @@ from yt_dlp import YoutubeDL
 from openai import OpenAI
 from markdown2 import Markdown
 
-# Sample input:
+# Sample input - a list of youtube cooking videos:
 # [
 #     "https://www.youtube.com/watch?v=AyOxay5AtMM",
 #     "https://www.youtube.com/watch?v=vlEGY8IPD-Q"
 # ]
 
-# USER_PROMPT_TEMPLATE defines the audio intelligence task.
-# It is currently instructing Soniox Omnio multimodal LLM
-# to extract formatted food recipes data from input audio
+# USER_PROMPT_TEMPLATE
+# - defines instructions for our model.
+# - it is currently instructing Soniox Omnio multimodal LLM
+#   to extract formatted food recipes data from input audio
 USER_PROMPT_TEMPLATE = """
 Input audio contains cooking recipe data. Output formatted markdown document containing:
 1. Recipe title
@@ -26,7 +27,7 @@ Input audio contains cooking recipe data. Output formatted markdown document con
 Use wording as if you were conveying the recipe over radio. Make sure every listed ingredient is also used in the cooking process, otherwise do not list it.
 """.strip()
 
-
+# define our workflow class (we could define a Workflow abstract to extend from, since .run method is always required)
 class YoutubeAudioDataExtractor:
 
     # We will be triggering the run method and pass in a list of youtube video urls
@@ -36,6 +37,7 @@ class YoutubeAudioDataExtractor:
 
         # We can speed up the processing with multi-threading - increase max_workers amount if you can afford more
         with ThreadPoolExecutor(max_workers=2) as executor:
+            # execute the process method on each of our input objects
             results = executor.map(self.process, input)
             # Print out informational tuple list
             print(list(results))
@@ -45,15 +47,22 @@ class YoutubeAudioDataExtractor:
     def process(self, url: str) -> Tuple[str, str]:
         print(f"Processing {url}")
 
-        # combine all the steps of this workflow together
-        # 1. download youtube video and obtain an audio file and it's name
-        file_name = self.download(url)
-        # 2. run Soniox Omnio multimodal llm and extract data from audio
-        data = self.extract_data(file_name)
-        # 3. write output to pdf
-        self.create_pdf(file_name, data)
+        try:
+            # combine all the steps of this workflow together
+            # 1. download youtube video and obtain an audio file and it's name
+            file_name = self.download(url)
 
-        return (file_name, "done")
+            # 2. run Soniox Omnio multimodal llm and extract data from audio
+            data = self.extract_data(file_name)
+
+            # 3. write output to pdf
+            self.create_pdf(file_name, data)
+
+            # success
+            return (file_name, "Done.")
+        except:
+            # indicate simple failure
+            return (file_name, "Failed.")
 
     # In download step we use yt-dlp to download video/audio from youtube
     def download(self, url: str) -> str:
@@ -134,12 +143,19 @@ class YoutubeAudioDataExtractor:
         return data
 
     def create_pdf(self, file_name: str, data: str):
+        # since the LLM returns markdown output we need a parser for that
         markdowner = Markdown()
         output_dir = os.getenv("OUTPUT_DIR") or "./output"
 
+        # make sure our output path exists
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
+        # create new writable file
         recipe_file = open(f"./output/{file_name}.html","w")
+
+        # convert markdown to HTML
         recipe_file.write(markdowner.convert(data))
+
+        # we are done
         recipe_file.close()
