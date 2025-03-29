@@ -2,7 +2,6 @@ import os
 import requests
 import math
 from PIL import Image
-
 from typing import Tuple
 from concurrent.futures import ThreadPoolExecutor
 
