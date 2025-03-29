@@ -1,6 +1,7 @@
 import argparse
 import json
 from dotenv import load_dotenv
+from workflows.image_background_remover import ImageBackgroundRemover
 from workflows.youtube_audio_data_extractor import YoutubeAudioDataExtractor
 
 # if you have created the .env file on your local machine you can use dotenv
@@ -10,7 +11,8 @@ load_dotenv()
 
 # list of workflow classes available to run - extend it with new workflows
 AVAILABLE_WORKFLOWS = {
-    "youtube_audio_data_extractor": YoutubeAudioDataExtractor
+    "youtube_audio_data_extractor": YoutubeAudioDataExtractor,
+    "image_background_remover": ImageBackgroundRemover
 }
 
 def main(workflow: str, input: any):
